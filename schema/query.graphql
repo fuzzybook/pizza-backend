@@ -1,0 +1,7 @@
+type Query {
+  users: [User!]! #@hasRole(roles: [ADMIN])
+  usersPaginate(input: UserPages!): UserPagesResponse!
+  getUser(userId: ID!): User!
+
+  sessions: [Session!]!
+}

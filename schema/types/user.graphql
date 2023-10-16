@@ -1,0 +1,123 @@
+directive @hasRole(roles: [UserRole!]!) on FIELD_DEFINITION
+
+type User @goModel(model: "pizza-backend/models.User") {
+  id: Int!
+  email: String!
+  name: String!
+  roles: [UserRole!]!
+  status: UserStatus!
+  types: UserType!
+  details: UserDetails
+  bio: UserBio
+  pro: UserPro
+  bank: UserBank
+  session: Session
+  activatedAt: Time
+}
+
+type UserSocials {
+  website: String
+  twitter: String
+  linkedin: String
+  instagram: String
+  facebook: String
+  youtube: String
+}
+
+type UserBio {
+  id: Int!
+  avatar: String
+  bio: String
+  socials: UserSocials
+}
+
+type UserPro {
+  id: Int!
+  ipi: String
+  promember: String
+}
+
+type UserBank {
+  id: Int!
+  name: String
+  bicswift: String
+  account: String
+  accountName: String
+  iban: String
+}
+
+type UserDetails {
+  id: Int!
+  title: String!
+  firstName: String!
+  lastName: String!
+  address: String
+  city: String
+  zipCode: String
+  country: String
+  phone: String
+}
+
+type Session {
+  recoveryToken: String!
+  createdAt: Time!
+  user: User! @goField(forceResolver: true)
+}
+
+enum UserType {
+  SYSTEM
+  SITE
+  AUTHOR
+}
+
+enum UserStatus {
+  AWAITING
+  PENDING
+  ACTIVE
+  BLOCKED
+  BANNED
+}
+
+enum UserRole {
+  ADMIN
+  USER
+  MUSICMANAGER
+}
+
+input NewUser @goModel(model: "pizza-backend/models.NewUser") {
+  name: String!
+  email: String!
+  roles: [UserRole!]!
+  types: UserType!
+  password: String!
+}
+
+input UpdateUserRoles @goModel(model: "pizza-backend/models.UpdateUserRoles") {
+  userId: Int!
+  roles: [UserRole!]!
+}
+
+input UpdateUserPassword
+  @goModel(model: "pizza-backend/models.UpdateUserPassword") {
+  userId: Int!
+  password: String!
+}
+
+input UserLogin @goModel(model: "pizza-backend/models.UserLogin") {
+  email: String!
+  password: String!
+}
+
+input UserPages @goModel(model: "pizza-backend/models.UserPages") {
+  page: Int!
+  pageSize: Int!
+  sortBy: String
+  descending: Boolean
+}
+
+type UserPagesResponse {
+  page: Int!
+  pageSize: Int!
+  count: Int!
+  users: [User]
+}

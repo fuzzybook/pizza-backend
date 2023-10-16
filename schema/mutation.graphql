@@ -1,0 +1,6 @@
+type Mutation {
+  createUser(input: NewUser!): User!
+  updateUserRoles(input: UpdateUserRoles!): User! @hasRole(roles: [ADMIN])
+  updateUserPassword(input: UpdateUserPassword!): User!
+  login(input: UserLogin!): Session
+}
