@@ -6,7 +6,6 @@ package resolvers
 
 import (
 	"context"
-	"fmt"
 	"pizza-backend/models"
 )
 
@@ -20,20 +19,19 @@ func (r *userResolver) Roles(ctx context.Context, obj *models.User) ([]models.Us
 	return obj.Roles, nil
 }
 
-// Types is the resolver for the types field.
-func (r *newUserResolver) Types(ctx context.Context, obj *models.NewUser, data models.UserType) error {
-	panic(fmt.Errorf("not implemented: Types - types"))
-}
-
 // Session returns SessionResolver implementation.
 func (r *Resolver) Session() SessionResolver { return &sessionResolver{r} }
 
 // User returns UserResolver implementation.
 func (r *Resolver) User() UserResolver { return &userResolver{r} }
 
-// NewUser returns NewUserResolver implementation.
-func (r *Resolver) NewUser() NewUserResolver { return &newUserResolver{r} }
-
 type sessionResolver struct{ *Resolver }
 type userResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//     it when you're done.
+//   - You have helper methods in this file. Move them out to keep these resolver files clean.
 type newUserResolver struct{ *Resolver }

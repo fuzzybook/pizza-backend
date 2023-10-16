@@ -43,7 +43,6 @@ type ResolverRoot interface {
 	Query() QueryResolver
 	Session() SessionResolver
 	User() UserResolver
-	NewUser() NewUserResolver
 }
 
 type DirectiveRoot struct {
@@ -154,10 +153,6 @@ type SessionResolver interface {
 }
 type UserResolver interface {
 	Roles(ctx context.Context, obj *models.User) ([]models.UserRole, error)
-}
-
-type NewUserResolver interface {
-	Types(ctx context.Context, obj *models.NewUser, data models.UserType) error
 }
 
 type executableSchema struct {
@@ -842,7 +837,7 @@ input NewUser @goModel(model: "pizza-backend/models.NewUser") {
   name: String!
   email: String!
   roles: [UserRole!]!
-  types: UserType!
+  type: UserType!
   password: String!
 }
 
@@ -5655,7 +5650,7 @@ func (ec *executionContext) unmarshalInputNewUser(ctx context.Context, obj inter
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "email", "roles", "types", "password"}
+	fieldsInOrder := [...]string{"name", "email", "roles", "type", "password"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -5689,17 +5684,15 @@ func (ec *executionContext) unmarshalInputNewUser(ctx context.Context, obj inter
 				return it, err
 			}
 			it.Roles = data
-		case "types":
+		case "type":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("types"))
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
 			data, err := ec.unmarshalNUserType2pizzaᚑbackendᚋmodelsᚐUserType(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			if err = ec.resolvers.NewUser().Types(ctx, &it, data); err != nil {
-				return it, err
-			}
+			it.Type = data
 		case "password":
 			var err error
 

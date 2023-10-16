@@ -88,7 +88,7 @@ input NewUser @goModel(model: "pizza-backend/models.NewUser") {
   name: String!
   email: String!
   roles: [UserRole!]!
-  types: UserType!
+  type: UserType!
   password: String!
 }
 

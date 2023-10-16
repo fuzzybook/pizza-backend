@@ -100,7 +100,7 @@ type NewUser struct {
 	Name     string     `json:"name"`
 	Email    string     `json:"email"`
 	Roles    []UserRole `json:"roles"`
-	Type     UserType   `json:"types"`
+	Type     UserType   `json:"type"`
 	Password string     `json:"password"`
 }
 
