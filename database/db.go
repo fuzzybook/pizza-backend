@@ -1,22 +1,25 @@
 package database
 
 import (
-	"log"
 	"os"
+	"pizza-backend/config"
 	"pizza-backend/models"
 
+	log "github.com/sirupsen/logrus"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
 
 func createDb() {
-	err := os.Remove("dataBase14.sql")
+	conf := config.GetYamlValues()
+
+	err := os.Remove(conf.SqliteConfig.Database)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	newdb, err := gorm.Open(sqlite.Open("dataBase14.sql"), &gorm.Config{
+	newdb, err := gorm.Open(sqlite.Open(conf.SqliteConfig.Database), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
 	})
 	if err != nil {
@@ -40,16 +43,17 @@ func createDb() {
 
 	err = newdb.Create(&user).Error
 	if err != nil {
-		panic("errore creazione utente")
+		log.Fatalln("-----> errore creazione utente")
 	}
 }
 
 func InitDb() (*gorm.DB, error) {
 	var err error
+	conf := config.GetYamlValues()
 
 	createDb()
 
-	db, err := gorm.Open(sqlite.Open("dataBase14.sql"), &gorm.Config{
+	db, err := gorm.Open(sqlite.Open(conf.SqliteConfig.Database), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
 	})
 	if err != nil {

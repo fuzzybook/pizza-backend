@@ -1,0 +1,12 @@
+SERVER:
+  port: "8080"
+  debug: true
+DATABASE:
+  server: localhost
+  username: ""
+  password: ""
+  port: "5432"
+  schema: test_db
+  connection_max: 50
+SQLITE:
+  database: "dataBase14.sql"

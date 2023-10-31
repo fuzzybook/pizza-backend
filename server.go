@@ -5,14 +5,15 @@ import (
 	"fmt"
 	"path/filepath"
 	"pizza-backend/common"
+	"pizza-backend/config"
 	"pizza-backend/database"
 	"pizza-backend/models"
 	"pizza-backend/resolvers"
 	"strings"
 
-	"log"
 	"net/http"
-	"os"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/handler"
@@ -43,9 +44,41 @@ func FileServer(r chi.Router, path string, root http.FileSystem) {
 	})
 }
 
-func main() {
+type myFormatter struct {
+	log.TextFormatter
+}
 
-	port := os.Getenv("PORT")
+func (f *myFormatter) Format(entry *log.Entry) ([]byte, error) {
+	// this whole mess of dealing with ansi color codes is required if you want the colored output otherwise you will lose colors in the log levels
+	var levelColor int
+	switch entry.Level {
+	case log.DebugLevel, log.TraceLevel:
+		levelColor = 31 // gray
+	case log.WarnLevel:
+		levelColor = 33 // yellow
+	case log.ErrorLevel, log.FatalLevel, log.PanicLevel:
+		levelColor = 31 // red
+	default:
+		levelColor = 36 // blue
+	}
+	return []byte(fmt.Sprintf("\x1b[%dm [%s] - %s - %s\x1b[0m\n", levelColor, entry.Time.Format(f.TimestampFormat), strings.ToUpper(entry.Level.String()), entry.Message)), nil
+}
+
+func main() {
+	log.SetFormatter(&myFormatter{
+		log.TextFormatter{
+			FullTimestamp:          true,
+			TimestampFormat:        "2006-01-02 15:04:05",
+			ForceColors:            true,
+			DisableLevelTruncation: true,
+		},
+	},
+	)
+
+	config.Initialize("./config/config.yaml")
+	conf := config.GetYamlValues()
+
+	port := conf.ServerConfig.Port
 	if port == "" {
 		port = defaultPort
 	}
@@ -88,6 +121,10 @@ func main() {
 	router.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	router.Handle("/query", common.CreateContext(customCtx, srv))
 
-	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
-	log.Fatal(http.ListenAndServe(":"+port, router))
+	log.Infof("connect to http://localhost:%s/ for GraphQL playground", port)
+	err = http.ListenAndServe(":"+port, router)
+	if err != nil {
+		log.Fatalln("-----> not able to connect: ", port)
+	}
+
 }
