@@ -105,9 +105,8 @@ func main() {
 	router.Use(models.Middleware(db))
 	c := resolvers.Config{Resolvers: &resolvers.Resolver{}}
 	c.Directives.HasRole = func(ctx context.Context, obj interface{}, next graphql.Resolver, roles []models.UserRole) (interface{}, error) {
-		var ur models.UserRoles = roles
-
-		if user := models.ForContext(ctx); user == nil || !ur.CheckRoles(user.Roles) {
+		var userRoles models.UserRoles = roles
+		if user := models.ForContext(ctx); user == nil || !userRoles.CheckRoles(user.Roles) {
 			return nil, fmt.Errorf("Access denied")
 		}
 		// or let it pass through
