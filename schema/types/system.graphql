@@ -1,0 +1,11 @@
+type Language  {
+	value:  String!
+	label:  String!
+    flag: String!
+}
+type SystemInfo {
+    version:  String!
+    roles: [String!]!  
+    avatars:String!
+    languages:[Language!]! 
+}

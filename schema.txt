@@ -1,0 +1,371 @@
+# GQL Directives
+# This part is fairly necessary and is described in the gql documentation
+# https://gqlgen.com/config/
+directive @goModel(model: String, models: [String!]) on OBJECT
+    | INPUT_OBJECT
+    | SCALAR
+    | ENUM
+    | INTERFACE
+    | UNION
+
+directive @goField(forceResolver: Boolean, name: String) on INPUT_FIELD_DEFINITION
+    | FIELD_DEFINITION
+
+type Mutation {
+  createUser(input: NewUser!): User!
+  updateUserRoles(input: UpdateUserRoles!): User! @hasRole(roles: [ADMIN])
+  updateUserPassword(input: UpdateUserPassword!): User!
+  login(input: UserLogin!): Session
+
+  deleteMenuIngredient(input: DeleteIngredient!): Boolean!
+  updateMenuIngredient(input: UpdateIngredient!): MenuIngredient!
+  updateMenuIngredients(input: [UpdateIngredient]): [MenuIngredient!]!
+
+  deleteMenuDough(input: DeleteDough!): Boolean!
+  updateMenuDough(input: UpdateDough!): MenuDough!
+  updateMenuDoughs(input: [UpdateDough]): [MenuDough!]!
+
+  deleteMenuCondiment(input: DeleteCondiment!): Boolean!
+  updateMenuCondiment(input: UpdateCondiment!): MenuCondiment!
+  updateMenuCondiments(input: [UpdateCondiment]): [MenuCondiment!]!
+
+  deleteMenuCategory(input: DeleteCategory!): Boolean!
+  updateMenuCategory(input: UpdateCategory): MenuCategory!
+
+  deleteMenuCategoryItem(input: UpdateCategoryItem): Boolean!
+  updateMenuCategoryItem(input: UpdateCategoryItem): MenuItem!
+
+  uploadMenuImage(file: Upload!): Boolean!
+  saveMenuImage(input: SaveImage!): String
+
+  updateMenuItemPromo(promo: Boolean!, id: Int!): Boolean!
+
+  putOrder(data: String!, email: String!, phone: String!): Boolean!
+
+  saveTimes(times: String!): Boolean!
+}
+
+type Query {
+  users: [User!]! @hasRole(roles: [ADMIN])
+  usersPaginate(input: UserPages!): UserPagesResponse! @hasRole(roles: [ADMIN])
+  getUser(userId: ID!): User! @hasRole(roles: [ADMIN])
+  sessions: [Session!]! @hasRole(roles: [ADMIN])
+
+  me: User! @needAuth(need: false)
+  system: SystemInfo!
+  logout: LogoutResult
+
+  menu: Menu!
+  promos: [MenuItem!]
+  times: String!
+}
+
+# gqlgen supports some custom scalars out of the box
+# see: https://github.com/99designs/gqlgen/blob/master/docs/content/reference/scalars.md
+
+# resolves to time.Time
+scalar Time
+
+# resolves to map[string]interface{}
+scalar Map
+
+# resolves to interface{}
+scalar Any
+
+# resolves to the following struct
+# type Upload struct {
+# 	File     io.Reader
+# 	Filename string
+# 	Size     int64
+# }
+scalar Upload
+
+type Menu {
+  Ingredients: [MenuIngredient!]! @goField(forceResolver: true)
+  Doughs: [MenuDough!]! @goField(forceResolver: true)
+  Condiments: [MenuCondiment!]! @goField(forceResolver: true)
+  Categories: [MenuCategory!]! @goField(forceResolver: true)
+}
+
+type MenuDataCategory {
+  text: String!
+  priority: Int!
+}
+
+type MenuIngredient {
+  id: Int!
+  available: Int!
+  priority: Int!
+  categories: [MenuDataCategory!]! @goField(forceResolver: true)
+  text: String!
+}
+
+type MenuDough {
+  id: Int!
+  available: Int!
+  priority: Int!
+  categories: [MenuDataCategory!]! @goField(forceResolver: true)
+  text: String!
+}
+
+type MenuCondiment {
+  id: Int!
+  available: Int!
+  priority: Int!
+  categories: [MenuDataCategory!]! @goField(forceResolver: true)
+  text: String!
+}
+
+type MenuCategory {
+  id: Int!
+  uuid: String!
+  category: String!
+  title: String!
+  image: String!
+  items: [MenuItem!]!
+}
+
+type MenuItem {
+  id: Int!
+  uuid: String!
+  categoryRefer: Int!
+  dirty: Boolean!
+  promo: Boolean!
+  data: MenuItemData!
+}
+
+type MenuItemData @goModel(model: "pizza-backend/models.MenuItemData") {
+  doughs: [String!]
+  condiments: [String!]
+  ingredients: [String!]
+  extra: [menuExtra]
+  title: String!
+  text: String!
+  image: String!
+  price: String!
+}
+
+type menuExtra @goModel(model: "pizza-backend/models.MenuExtra") {
+  take: Boolean!
+  text: String!
+  price: String!
+  alternative: String
+}
+
+"The `File` type, represents the response of uploading a file."
+type File {
+  id: Int!
+  name: String!
+  content: String!
+  contentType: String!
+}
+
+type menuDataIngredient @goModel(model: "pizza-backend/models.MenuDataIngredient") {
+  take: Boolean!
+  text: String!
+}
+
+type menuDataResult @goModel(model: "pizza-backend/models.MenuDataResult") {
+  uid: String!
+  selected: Boolean!
+  tipo: String!
+  title: String!
+  price: String!
+  quantity: Int!
+  total: Int!
+  dought: String!
+  extra: [menuExtra]
+  ingredients: [menuDataIngredient!]!
+  condiments: [menuDataIngredient]
+}
+
+input UpdateIngredient @goModel(model: "pizza-backend/models.UpdateIngredient") {
+  id: Int!
+  available: Int!
+  priority: Int!
+  categories: String!
+  text: String!
+}
+input DeleteIngredient @goModel(model: "pizza-backend/models.DeleteIngredient") {
+  id: Int!
+}
+
+input UpdateDough @goModel(model: "pizza-backend/models.UpdateDough") {
+  id: Int!
+  available: Int!
+  priority: Int!
+  categories: String!
+  text: String!
+}
+input DeleteDough @goModel(model: "pizza-backend/models.DeleteDough") {
+  id: Int!
+}
+
+input UpdateCondiment @goModel(model: "pizza-backend/models.UpdateCondiment") {
+  id: Int!
+  available: Int!
+  priority: Int!
+  categories: String!
+  text: String!
+}
+input DeleteCondiment @goModel(model: "pizza-backend/models.DeleteCondiment") {
+  id: Int!
+}
+
+input UpdateCategory @goModel(model: "pizza-backend/models.UpdateCategory") {
+  id: Int!
+  category: String!
+  title: String!
+  image: String!
+}
+
+input DeleteCategory @goModel(model: "pizza-backend/models.DeleteCategory") {
+  id: Int!
+}
+
+input UpdateCategoryItem @goModel(model: "pizza-backend/models.UpdateCategoryItem") {
+  id: Int!
+  categoryRefer: Int!
+  data: String!
+}
+
+"The `UploadFile` type, represents the request for uploading a file with certain payload."
+input UploadFile {
+  id: Int!
+  file: Upload!
+}
+
+input SaveImage @goModel(model: "pizza-backend/models.SaveImage") {
+  id: Int!
+  uuid: String!
+  image: String!
+}
+
+type Language  {
+	value:  String!
+	label:  String!
+    flag: String!
+}
+type SystemInfo {
+    version:  String!
+    roles: [String!]!  
+    avatars:String!
+    languages:[Language!]! 
+}
+directive @hasRole(roles: [UserRole!]!) on FIELD_DEFINITION
+directive @needAuth(need:Boolean) on FIELD_DEFINITION
+
+type User @goModel(model: "pizza-backend/models.User") {
+  id: Int!
+  uuid: String
+  email: String!
+  name: String!
+  roles: [UserRole!]!
+  status: UserStatus!
+  types: UserType!
+  details: UserDetails
+  preferences: UserPreferences
+  avatar: String
+  activatedAt: Time
+}
+
+type UserPreferences {
+  useIdle: Boolean
+  idleTimeout: Int
+  useIdlePassword: Boolean
+  idlePin: String
+  useDirectLogin: Boolean
+  useQuadcodeLogin: Boolean
+  sendNoticesMail: Boolean
+  language: String
+}
+
+type UserSocials {
+  website: String
+  twitter: String
+  linkedin: String
+  instagram: String
+  facebook: String
+  youtube: String
+}
+
+type UserDetails {
+  id: Int!
+  title: String!
+  firstName: String!
+  lastName: String!
+  address: String
+  city: String
+  zipCode: String
+  country: String
+  phone: String
+}
+
+type Session {
+  recoveryToken: String!
+  firedAt: Time
+  user: User! @goField(forceResolver: true)
+}
+
+type LogoutResult{
+  ok: Boolean
+}
+
+enum UserType {
+  SYSTEM
+  SITE
+  AUTHOR
+}
+
+enum UserStatus {
+  AWAITING
+  PENDING
+  ACTIVE
+  BLOCKED
+  BANNED
+}
+
+enum UserRole {
+  ADMIN
+  USER
+  MUSICMANAGER
+}
+
+input NewUser @goModel(model: "pizza-backend/models.NewUser") {
+  name: String!
+  email: String!
+  roles: [UserRole!]!
+  type: UserType!
+  password: String!
+}
+
+input UpdateUserRoles @goModel(model: "pizza-backend/models.UpdateUserRoles") {
+  userId: Int!
+  roles: [UserRole!]!
+}
+
+input UpdateUserPassword
+  @goModel(model: "pizza-backend/models.UpdateUserPassword") {
+  userId: Int!
+  password: String!
+}
+
+input UserLogin @goModel(model: "pizza-backend/models.UserLogin") {
+  email: String!
+  password: String!
+}
+
+input UserPages @goModel(model: "pizza-backend/models.UserPages") {
+  page: Int!
+  pageSize: Int!
+  sortBy: String
+  descending: Boolean
+}
+
+type UserPagesResponse {
+  page: Int!
+  pageSize: Int!
+  count: Int!
+  users: [User]
+}
+

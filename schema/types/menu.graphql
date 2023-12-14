@@ -1,0 +1,160 @@
+type Menu {
+  Ingredients: [MenuIngredient!]! @goField(forceResolver: true)
+  Doughs: [MenuDough!]! @goField(forceResolver: true)
+  Condiments: [MenuCondiment!]! @goField(forceResolver: true)
+  Categories: [MenuCategory!]! @goField(forceResolver: true)
+}
+
+type MenuDataCategory {
+  text: String!
+  priority: Int!
+}
+
+type MenuIngredient {
+  id: Int!
+  available: Int!
+  priority: Int!
+  categories: [MenuDataCategory!]! @goField(forceResolver: true)
+  text: String!
+}
+
+type MenuDough {
+  id: Int!
+  available: Int!
+  priority: Int!
+  categories: [MenuDataCategory!]! @goField(forceResolver: true)
+  text: String!
+}
+
+type MenuCondiment {
+  id: Int!
+  available: Int!
+  priority: Int!
+  categories: [MenuDataCategory!]! @goField(forceResolver: true)
+  text: String!
+}
+
+type MenuCategory {
+  id: Int!
+  uuid: String!
+  category: String!
+  title: String!
+  image: String!
+  items: [MenuItem!]!
+}
+
+type MenuItem {
+  id: Int!
+  uuid: String!
+  categoryRefer: Int!
+  dirty: Boolean!
+  promo: Boolean!
+  data: MenuItemData!
+}
+
+type MenuItemData @goModel(model: "pizza-backend/models.MenuItemData") {
+  doughs: [String!]
+  condiments: [String!]
+  ingredients: [String!]
+  extra: [menuExtra]
+  title: String!
+  text: String!
+  image: String!
+  price: String!
+}
+
+type menuExtra @goModel(model: "pizza-backend/models.MenuExtra") {
+  take: Boolean!
+  text: String!
+  price: String!
+  alternative: String
+}
+
+"The `File` type, represents the response of uploading a file."
+type File {
+  id: Int!
+  name: String!
+  content: String!
+  contentType: String!
+}
+
+type menuDataIngredient @goModel(model: "pizza-backend/models.MenuDataIngredient") {
+  take: Boolean!
+  text: String!
+}
+
+type menuDataResult @goModel(model: "pizza-backend/models.MenuDataResult") {
+  uid: String!
+  selected: Boolean!
+  tipo: String!
+  title: String!
+  price: String!
+  quantity: Int!
+  total: Int!
+  dought: String!
+  extra: [menuExtra]
+  ingredients: [menuDataIngredient!]!
+  condiments: [menuDataIngredient]
+}
+
+input UpdateIngredient @goModel(model: "pizza-backend/models.UpdateIngredient") {
+  id: Int!
+  available: Int!
+  priority: Int!
+  categories: String!
+  text: String!
+}
+input DeleteIngredient @goModel(model: "pizza-backend/models.DeleteIngredient") {
+  id: Int!
+}
+
+input UpdateDough @goModel(model: "pizza-backend/models.UpdateDough") {
+  id: Int!
+  available: Int!
+  priority: Int!
+  categories: String!
+  text: String!
+}
+input DeleteDough @goModel(model: "pizza-backend/models.DeleteDough") {
+  id: Int!
+}
+
+input UpdateCondiment @goModel(model: "pizza-backend/models.UpdateCondiment") {
+  id: Int!
+  available: Int!
+  priority: Int!
+  categories: String!
+  text: String!
+}
+input DeleteCondiment @goModel(model: "pizza-backend/models.DeleteCondiment") {
+  id: Int!
+}
+
+input UpdateCategory @goModel(model: "pizza-backend/models.UpdateCategory") {
+  id: Int!
+  category: String!
+  title: String!
+  image: String!
+}
+
+input DeleteCategory @goModel(model: "pizza-backend/models.DeleteCategory") {
+  id: Int!
+}
+
+input UpdateCategoryItem @goModel(model: "pizza-backend/models.UpdateCategoryItem") {
+  id: Int!
+  categoryRefer: Int!
+  data: String!
+}
+
+"The `UploadFile` type, represents the request for uploading a file with certain payload."
+input UploadFile {
+  id: Int!
+  file: Upload!
+}
+
+input SaveImage @goModel(model: "pizza-backend/models.SaveImage") {
+  id: Int!
+  uuid: String!
+  image: String!
+}
