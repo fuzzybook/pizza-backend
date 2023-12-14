@@ -28,56 +28,38 @@ type UserDetails struct {
 	UpdatedAt time.Time `json:"updatedAt"`
 }
 
-type UserBio struct {
-	ID        int         `json:"id" gorm:"primaryKey"`
-	UserID    int         `json:"userId"`
-	Avatar    string      `json:"avatar"`
-	Bio       string      `json:"bio" gorm:"type:text"`
-	Socials   UserSocials `json:"socials" gorm:"type:text"`
-	CreatedAt time.Time   `json:"createdAt"`
-	UpdatedAt time.Time   `json:"updatedAt"`
-}
-
-type UserPro struct {
-	ID        int       `json:"id" gorm:"primaryKey"`
-	UserID    int       `json:"userId"`
-	Ipi       string    `json:"ipi"`
-	Promember string    `json:"promember"`
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
-}
-
-type UserBank struct {
-	ID          int       `json:"id" gorm:"primaryKey"`
-	UserID      int       `json:"userId"`
-	Name        string    `json:"name"`
-	Bicswift    string    `json:"bicswift"`
-	Account     string    `json:"account"`
-	AccountName string    `json:"accountName"`
-	Iban        string    `json:"iban"`
-	CreatedAt   time.Time `json:"createdAt"`
-	UpdatedAt   time.Time `json:"updatedAt"`
-}
-
 type User struct {
-	ID          int            `json:"id" gorm:"primaryKey"`
-	Email       string         `json:"email"  gorm:"unique"`
-	Name        string         `json:"name"`
-	Password    string         `json:"password"`
-	Roles       UserRoles      `json:"roles" gorm:"type:text"`
-	Status      UserStatus     `json:"status" gorm:"type:text"`
-	Types       UserType       `json:"types"  gorm:"type:text"`
-	ActivatedAt *time.Time     `json:"activatedAt"`
-	UUID        string         `json:"uuid"`
-	PastelleID  string         `json:"pastelleid"`
-	Details     *UserDetails   `json:"details" `
-	Bio         *UserBio       `json:"bio" `
-	Pro         *UserPro       `json:"pro" `
-	Bank        *UserBank      `json:"bank" `
-	Session     *Session       `json:"session" `
-	CreatedAt   time.Time      `json:"createdAt"`
-	UpdatedAt   time.Time      `json:"updatedAt"`
-	DeletedAt   gorm.DeletedAt `gorm:"index"`
+	ID          int              `json:"id" gorm:"primaryKey"`
+	Email       string           `json:"email"  gorm:"unique"`
+	Name        string           `json:"name"`
+	Password    string           `json:"password"`
+	Roles       UserRoles        `json:"roles" gorm:"type:text"`
+	Status      UserStatus       `json:"status" gorm:"type:text"`
+	Types       UserType         `json:"types"  gorm:"type:text"`
+	ActivatedAt *time.Time       `json:"activatedAt"`
+	UUID        string           `json:"uuid"`
+	Details     *UserDetails     `json:"details" `
+	Preferences *UserPreferences `json:"preferences" `
+	Avatar      *string          `json:"avatar" `
+	CreatedAt   time.Time        `json:"createdAt"`
+	UpdatedAt   time.Time        `json:"updatedAt"`
+	DeletedAt   gorm.DeletedAt   `gorm:"index"`
+}
+
+type UserPreferences struct {
+	ID               int            `json:"id" gorm:"primaryKey"`
+	UserId           int            `json:"userId"`
+	UseIdle          bool           `json:"useIdle"`
+	IdleTimeout      int            `json:"idleTimeout"`
+	UseIdlePassword  bool           `json:"useIdlePassword"`
+	IdlePin          string         `json:"idlePin"`
+	UseDirectLogin   bool           `json:"useDirectLogin"`
+	UseQuadcodeLogin bool           `json:"useQuadcodeLogin"`
+	SendNoticesMail  bool           `json:"sendNoticesMail"`
+	Language         string         `json:"language"`
+	CreatedAt        time.Time      `json:"createdAt"`
+	UpdatedAt        time.Time      `json:"updatedAt"`
+	DeletedAt        gorm.DeletedAt `gorm:"index"`
 }
 
 type UserBridge struct {
@@ -91,6 +73,7 @@ type Session struct {
 	UserID        int            `json:"userId"`
 	RecoveryToken string         `json:"recoveryToken"`
 	Roles         string         `json:"roles"`
+	FiredAt       time.Time      `json:"firedAt"`
 	CreatedAt     time.Time      `json:"createdAt"`
 	UpdatedAt     time.Time      `json:"updatedAt"`
 	DeletedAt     gorm.DeletedAt `gorm:"index"`
@@ -126,6 +109,10 @@ type UserPages struct {
 	Descending bool   `json:"descending"`
 }
 
+type LogoutResult struct {
+	Ok bool `json:"ok"`
+}
+
 // user actions
 
 func CreateUser(ctx context.Context, input NewUser) (*User, error) {
@@ -144,6 +131,31 @@ func CreateUser(ctx context.Context, input NewUser) (*User, error) {
 	return user, nil
 }
 
+func Logout(ctx context.Context) (*LogoutResult, error) {
+	context := common.GetContext(ctx)
+	var user *User
+	var claimUser *ClaimUser
+	if claimUser = ForContext(ctx); claimUser == nil {
+		return &LogoutResult{Ok: true}, nil
+	}
+
+	err := context.Database.Where("id = ?", claimUser.Id).Find(&user).Error
+	if err != nil {
+		return nil, err
+	}
+
+	// create session
+	session := &Session{}
+	err = context.Database.Where("user_id = ?", user.ID).Find(&session).Error
+	if err != nil {
+		return &LogoutResult{Ok: true}, nil
+	}
+
+	session.FiredAt = time.Now()
+
+	return &LogoutResult{Ok: true}, nil
+}
+
 func Login(ctx context.Context, input UserLogin) (*Session, error) {
 	context := common.GetContext(ctx)
 	var user *User
@@ -156,9 +168,10 @@ func Login(ctx context.Context, input UserLogin) (*Session, error) {
 	}
 	// create session
 	session := &Session{}
+
 	err = context.Database.Where("user_id = ?", user.ID).Find(&session).Error
 	if err != nil {
-		return nil, fmt.Errorf("user not foundr %s", input.Email)
+		return nil, fmt.Errorf("user not found %s", input.Email)
 	}
 
 	if err := ComparePassword(user.Password, input.Password); err != nil {
@@ -178,6 +191,7 @@ func Login(ctx context.Context, input UserLogin) (*Session, error) {
 		}
 		return session, nil
 	}
+
 	err = context.Database.Save(&session).Error
 	if err != nil {
 		return nil, err
@@ -192,6 +206,16 @@ func (u *User) GetById(db *gorm.DB, id int) error {
 		return err
 	}
 	return nil
+}
+
+func GetCompleteUserById(ctx context.Context, userId int) (*User, error) {
+	context := common.GetContext(ctx)
+	user := &User{}
+	err := context.Database.Preload("Details").Preload("Preferences").Where("id = ?", userId).Find(&user).Error
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
 }
 
 func GetUserById(ctx context.Context, userId int) (*User, error) {
@@ -248,19 +272,6 @@ func GetUserDetails(ctx context.Context, userId int) (*UserDetails, error) {
 	return details, nil
 }
 
-func GetUserBio(ctx context.Context, userId int) (*UserBio, error) {
-	context := common.GetContext(ctx)
-	var bio *UserBio
-	err := context.Database.Where("id = ?", userId).Find(&bio).Error
-	if err != nil {
-		return nil, err
-	}
-	if bio.ID == 0 {
-		return nil, nil
-	}
-	return bio, nil
-}
-
 func GetUserSession(ctx context.Context, id int) (*Session, error) {
 	context := common.GetContext(ctx)
 	var session *Session
@@ -271,28 +282,12 @@ func GetUserSession(ctx context.Context, id int) (*Session, error) {
 	return session, nil
 }
 
-func GetUserPro(ctx context.Context, proId int) (*UserPro, error) {
+func Promos(ctx context.Context) ([]*MenuItem, error) {
 	context := common.GetContext(ctx)
-	var pro *UserPro
-	err := context.Database.Where("id = ?", proId).Find(&pro).Error
+	menuItems := []*MenuItem{}
+	err := context.Database.Where("promo = true").Find(&menuItems).Error
 	if err != nil {
 		return nil, err
 	}
-	if pro.ID == 0 {
-		return nil, nil
-	}
-	return pro, nil
-}
-
-func GetUserBank(ctx context.Context, bankId int) (*UserBank, error) {
-	context := common.GetContext(ctx)
-	var bank *UserBank
-	err := context.Database.Where("id = ?", bankId).Find(&bank).Error
-	if err != nil {
-		return nil, err
-	}
-	if bank.ID == 0 {
-		return nil, nil
-	}
-	return bank, nil
+	return menuItems, nil
 }

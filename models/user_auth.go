@@ -18,6 +18,7 @@ type contextKey struct {
 
 // A stand-in for our database backed user object
 type ClaimUser struct {
+	Id    int
 	Name  string
 	Email string
 	Roles []string
@@ -34,6 +35,8 @@ func Middleware(db *gorm.DB) func(http.Handler) http.Handler {
 			auth := r.Header.Get("Authorization")
 
 			if auth == "" {
+				ctx := context.WithValue(r.Context(), userCtxKey, nil)
+				r = r.WithContext(ctx)
 				next.ServeHTTP(w, r)
 				return
 			}
@@ -43,20 +46,33 @@ func Middleware(db *gorm.DB) func(http.Handler) http.Handler {
 
 			validate, err := jwt.JwtValidate(context.Background(), auth)
 			if err != nil || !validate.Valid {
-				http.Error(w, "Invalid token", http.StatusForbidden)
+				ctx := context.WithValue(r.Context(), userCtxKey, nil)
+				r = r.WithContext(ctx)
+				next.ServeHTTP(w, r)
 				return
 			}
 
 			customClaim, _ := validate.Claims.(*jwt.JwtCustomClaim)
 
-			var user *User
-			err = db.Where("id = ?", customClaim.ID).Find(&user).Error
+			session := &Session{}
+			err = db.Where("user_id = ?", customClaim.ID).Find(&session).Error
 			if err != nil {
-				http.Error(w, "No user found", http.StatusForbidden)
+				ctx := context.WithValue(r.Context(), userCtxKey, nil)
+				r = r.WithContext(ctx)
+				next.ServeHTTP(w, r)
 				return
 			}
 
-			var u = ClaimUser{Name: user.Name, Email: user.Email, Roles: user.Roles.Strings()}
+			var user *User
+			err = db.Where("id = ?", customClaim.ID).First(&user).Error
+			if err != nil {
+				ctx := context.WithValue(r.Context(), userCtxKey, nil)
+				r = r.WithContext(ctx)
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			var u = ClaimUser{Id: user.ID, Name: user.Name, Email: user.Email, Roles: user.Roles.Strings()}
 			ctx := context.WithValue(r.Context(), userCtxKey, &u)
 			// and call the next with our new context
 			r = r.WithContext(ctx)

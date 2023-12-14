@@ -3,4 +3,31 @@ type Mutation {
   updateUserRoles(input: UpdateUserRoles!): User! @hasRole(roles: [ADMIN])
   updateUserPassword(input: UpdateUserPassword!): User!
   login(input: UserLogin!): Session
+
+  deleteMenuIngredient(input: DeleteIngredient!): Boolean!
+  updateMenuIngredient(input: UpdateIngredient!): MenuIngredient!
+  updateMenuIngredients(input: [UpdateIngredient]): [MenuIngredient!]!
+
+  deleteMenuDough(input: DeleteDough!): Boolean!
+  updateMenuDough(input: UpdateDough!): MenuDough!
+  updateMenuDoughs(input: [UpdateDough]): [MenuDough!]!
+
+  deleteMenuCondiment(input: DeleteCondiment!): Boolean!
+  updateMenuCondiment(input: UpdateCondiment!): MenuCondiment!
+  updateMenuCondiments(input: [UpdateCondiment]): [MenuCondiment!]!
+
+  deleteMenuCategory(input: DeleteCategory!): Boolean!
+  updateMenuCategory(input: UpdateCategory): MenuCategory!
+
+  deleteMenuCategoryItem(input: UpdateCategoryItem): Boolean!
+  updateMenuCategoryItem(input: UpdateCategoryItem): MenuItem!
+
+  uploadMenuImage(file: Upload!): Boolean!
+  saveMenuImage(input: SaveImage!): String
+
+  updateMenuItemPromo(promo: Boolean!, id: Int!): Boolean!
+
+  putOrder(data: String!, email: String!, phone: String!): Boolean!
+
+  saveTimes(times: String!): Boolean!
 }

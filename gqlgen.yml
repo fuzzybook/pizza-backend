@@ -75,6 +75,12 @@ autobind:
 # modelgen, the others will be allowed when binding to fields. Configure them to
 # your liking
 models:
+  UUID:
+    model:
+      - github.com/99designs/gqlgen/graphql.UUID
+  Float:
+    model:
+      - github.com/99designs/gqlgen/graphql.Float
   ID:
     model:
       - github.com/99designs/gqlgen/graphql.ID

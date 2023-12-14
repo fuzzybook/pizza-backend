@@ -1,18 +1,29 @@
 directive @hasRole(roles: [UserRole!]!) on FIELD_DEFINITION
+directive @needAuth(need:Boolean) on FIELD_DEFINITION
 
 type User @goModel(model: "pizza-backend/models.User") {
   id: Int!
+  uuid: String
   email: String!
   name: String!
   roles: [UserRole!]!
   status: UserStatus!
   types: UserType!
   details: UserDetails
-  bio: UserBio
-  pro: UserPro
-  bank: UserBank
-  session: Session
+  preferences: UserPreferences
+  avatar: String
   activatedAt: Time
+}
+
+type UserPreferences {
+  useIdle: Boolean
+  idleTimeout: Int
+  useIdlePassword: Boolean
+  idlePin: String
+  useDirectLogin: Boolean
+  useQuadcodeLogin: Boolean
+  sendNoticesMail: Boolean
+  language: String
 }
 
 type UserSocials {
@@ -22,28 +33,6 @@ type UserSocials {
   instagram: String
   facebook: String
   youtube: String
-}
-
-type UserBio {
-  id: Int!
-  avatar: String
-  bio: String
-  socials: UserSocials
-}
-
-type UserPro {
-  id: Int!
-  ipi: String
-  promember: String
-}
-
-type UserBank {
-  id: Int!
-  name: String
-  bicswift: String
-  account: String
-  accountName: String
-  iban: String
 }
 
 type UserDetails {
@@ -60,8 +49,12 @@ type UserDetails {
 
 type Session {
   recoveryToken: String!
-  createdAt: Time!
+  firedAt: Time
   user: User! @goField(forceResolver: true)
+}
+
+type LogoutResult{
+  ok: Boolean
 }
 
 enum UserType {

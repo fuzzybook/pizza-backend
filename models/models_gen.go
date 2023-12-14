@@ -8,6 +8,13 @@ import (
 	"strconv"
 )
 
+type Menu struct {
+	Ingredients []*MenuIngredient `json:"Ingredients"`
+	Doughs      []*MenuDough      `json:"Doughs"`
+	Condiments  []*MenuCondiment  `json:"Condiments"`
+	Categories  []*MenuCategory   `json:"Categories"`
+}
+
 type UserPagesResponse struct {
 	Page     int     `json:"page"`
 	PageSize int     `json:"pageSize"`

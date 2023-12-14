@@ -9,6 +9,8 @@ import (
 	"pizza-backend/database"
 	"pizza-backend/models"
 	"pizza-backend/resolvers"
+	"pizza-backend/schema"
+
 	"strings"
 
 	"net/http"
@@ -65,6 +67,7 @@ func (f *myFormatter) Format(entry *log.Entry) ([]byte, error) {
 }
 
 func main() {
+
 	log.SetFormatter(&myFormatter{
 		log.TextFormatter{
 			FullTimestamp:          true,
@@ -95,7 +98,7 @@ func main() {
 	router := chi.NewRouter()
 
 	router.Use(cors.New(cors.Options{
-		AllowedOrigins: []string{"*"},
+		AllowedOrigins: []string{"http://localhost:9000", "http://89.217.128.222:9000", "http://192.168.178.30:9000"},
 		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders: []string{"Origin", "Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 		//AllowCredentials: true,
@@ -107,20 +110,34 @@ func main() {
 	c.Directives.HasRole = func(ctx context.Context, obj interface{}, next graphql.Resolver, roles []models.UserRole) (interface{}, error) {
 		var userRoles models.UserRoles = roles
 		if user := models.ForContext(ctx); user == nil || !userRoles.CheckRoles(user.Roles) {
-			return nil, fmt.Errorf("Access denied")
+			return nil, fmt.Errorf("access denied")
+		}
+		// or let it pass through
+		return next(ctx)
+	}
+	c.Directives.NeedAuth = func(ctx context.Context, obj interface{}, next graphql.Resolver, need *bool) (interface{}, error) {
+		if !*need {
+			return next(ctx)
+		}
+		if user := models.ForContext(ctx); user == nil {
+			return nil, fmt.Errorf("access denied")
 		}
 		// or let it pass through
 		return next(ctx)
 	}
 
 	FileServer(router, "/IMAGES", http.Dir(filepath.Join(storagePath, "IMAGES")))
+	FileServer(router, "/schema", http.Dir("."))
 
 	srv := handler.NewDefaultServer(resolvers.NewExecutableSchema(c))
 
 	router.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	router.Handle("/query", common.CreateContext(customCtx, srv))
 
+	schema.String()
+
 	log.Infof("connect to http://localhost:%s/ for GraphQL playground", port)
+
 	err = http.ListenAndServe(":"+port, router)
 	if err != nil {
 		log.Fatalln("-----> not able to connect: ", port)

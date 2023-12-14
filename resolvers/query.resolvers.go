@@ -34,6 +34,9 @@ func (r *queryResolver) Users(ctx context.Context) ([]*models.User, error) {
 	if slices.Contains(preloads, "bank") {
 		tx = tx.Preload("Bank")
 	}
+	if slices.Contains(preloads, "preferences") {
+		tx = tx.Preload("Preferences")
+	}
 
 	err := tx.Find(&users).Error
 	if err != nil {
@@ -61,10 +64,13 @@ func (r *queryResolver) UsersPaginate(ctx context.Context, input models.UserPage
 	if slices.Contains(preloads, "users.bank") {
 		tx = tx.Preload("Bank")
 	}
+	if slices.Contains(preloads, "users.preferences") {
+		tx = tx.Preload("Preferences")
+	}
 
 	if input.SortBy != "" {
 		desc := ""
-		if input.Descending == true {
+		if input.Descending {
 			desc = "desc"
 		}
 		order := fmt.Sprintf("%s %s", strings.ToLower(input.SortBy), desc)
@@ -119,6 +125,52 @@ func (r *queryResolver) Sessions(ctx context.Context) ([]*models.Session, error)
 		return nil, err
 	}
 	return sessions, nil
+}
+
+// Me is the resolver for the me field.
+func (r *queryResolver) Me(ctx context.Context) (*models.User, error) {
+	context := common.GetContext(ctx)
+	var user *models.User
+	var claimUser *models.ClaimUser
+	if claimUser = models.ForContext(ctx); claimUser == nil {
+		return nil, fmt.Errorf("access denied")
+	}
+
+	err := context.Database.Preload("Details").Preload("Preferences").Where("id = ?", claimUser.Id).Find(&user).Error
+	if err != nil {
+		return nil, err
+	}
+	defaultAvatar := "/IMAGES/defaultAvatar.png"
+	if user.Avatar == nil {
+		user.Avatar = &defaultAvatar
+	}
+	return user, nil
+}
+
+// System is the resolver for the system field.
+func (r *queryResolver) System(ctx context.Context) (*models.SystemInfo, error) {
+	sys := models.GetSystem()
+	return &sys, nil
+}
+
+// Logout is the resolver for the logout field.
+func (r *queryResolver) Logout(ctx context.Context) (*models.LogoutResult, error) {
+	return models.Logout(ctx)
+}
+
+// Menu is the resolver for the menu field.
+func (r *queryResolver) Menu(ctx context.Context) (*models.Menu, error) {
+	return &models.Menu{}, nil
+}
+
+// Promos is the resolver for the promos field.
+func (r *queryResolver) Promos(ctx context.Context) ([]*models.MenuItem, error) {
+	return models.Promos(ctx)
+}
+
+// Times is the resolver for the times field.
+func (r *queryResolver) Times(ctx context.Context) (string, error) {
+	return models.Times(ctx)
 }
 
 // Query returns QueryResolver implementation.

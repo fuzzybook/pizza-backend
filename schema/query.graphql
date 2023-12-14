@@ -1,7 +1,14 @@
 type Query {
-  users: [User!]! #@hasRole(roles: [ADMIN])
-  usersPaginate(input: UserPages!): UserPagesResponse!
-  getUser(userId: ID!): User!
+  users: [User!]! @hasRole(roles: [ADMIN])
+  usersPaginate(input: UserPages!): UserPagesResponse! @hasRole(roles: [ADMIN])
+  getUser(userId: ID!): User! @hasRole(roles: [ADMIN])
+  sessions: [Session!]! @hasRole(roles: [ADMIN])
 
-  sessions: [Session!]!
+  me: User! @needAuth(need: false)
+  system: SystemInfo!
+  logout: LogoutResult
+
+  menu: Menu!
+  promos: [MenuItem!]
+  times: String!
 }

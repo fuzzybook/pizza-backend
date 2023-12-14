@@ -1,64 +1,69 @@
 package database
 
 import (
-	"os"
-	"pizza-backend/config"
 	"pizza-backend/models"
 
-	log "github.com/sirupsen/logrus"
-	"gorm.io/driver/sqlite"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 )
 
 func createDb() {
-	conf := config.GetYamlValues()
+	//conf := config.GetYamlValues()
 
-	err := os.Remove(conf.SqliteConfig.Database)
+	/* err := os.Remove(conf.SqliteConfig.Database)
 	if err != nil {
 		log.Fatal(err)
-	}
+	} */
 
-	newdb, err := gorm.Open(sqlite.Open(conf.SqliteConfig.Database), &gorm.Config{
+	dsn := "host=localhost user=pizzaiolo password=pizzaiolo dbname=pizzeria port=5432 sslmode=disable TimeZone=Europe/Rome"
+	newdb, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	if err != nil {
+		panic(err.Error)
+	}
+	/* newdb, err := gorm.Open(sqlite.Open(conf.SqliteConfig.Database), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Error),
 	})
 	if err != nil {
 		panic(err.Error)
-	}
+	} */
 
 	newdb.AutoMigrate(
 		&models.User{},
+		&models.UserDetails{},
+		&models.UserPreferences{},
+		&models.Session{},
+
+		&models.MenuIngredient{},
+		&models.MenuDough{},
+		&models.MenuCondiment{},
+		&models.MenuCategory{},
+		&models.MenuItem{},
+		&models.MenuOrder{},
+		&models.MenuTimes{},
 	)
 
-	roles := make([]models.UserRole, 1, 10)
-	roles[0] = "ADMIN"
+	//CreateAdmin(newdb)
+	//CreateUser(newdb)
 
-	user := &models.User{
-		Email:    "pippo@mail.ccom",
-		Name:     "Pippo",
-		Roles:    roles,
-		Types:    "SITE",
-		Password: models.HashPassword("password"),
-	}
-
-	err = newdb.Create(&user).Error
-	if err != nil {
-		log.Fatalln("-----> errore creazione utente")
-	}
 }
 
 func InitDb() (*gorm.DB, error) {
 	var err error
-	conf := config.GetYamlValues()
+	//conf := config.GetYamlValues()
 
 	createDb()
 
-	db, err := gorm.Open(sqlite.Open(conf.SqliteConfig.Database), &gorm.Config{
+	dsn := "host=localhost user=pizzaiolo password=pizzaiolo dbname=pizzeria port=5432 sslmode=disable TimeZone=Europe/Rome"
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	if err != nil {
+		return nil, err
+	}
+	/* db, err := gorm.Open(sqlite.Open(conf.SqliteConfig.Database), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
 	})
 	if err != nil {
 		return nil, err
-	}
+	} */
 
 	return db, nil
 }
