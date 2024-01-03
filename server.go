@@ -98,7 +98,7 @@ func main() {
 	router := chi.NewRouter()
 
 	router.Use(cors.New(cors.Options{
-		AllowedOrigins: []string{"http://localhost:9000", "http://89.217.128.222:9000", "http://192.168.178.30:9000"},
+		AllowedOrigins: []string{"https://pizza.dyndns.winner4ever.com", "https://localhost:9000"},
 		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders: []string{"Origin", "Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 		//AllowCredentials: true,

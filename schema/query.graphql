@@ -10,5 +10,6 @@ type Query {
 
   menu: Menu!
   promos: [MenuItem!]
-  times: String!
+  weekTimes: String!
+  todayTimes: String!
 }

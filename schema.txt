@@ -57,7 +57,8 @@ type Query {
 
   menu: Menu!
   promos: [MenuItem!]
-  times: String!
+  weekTimes: String!
+  todayTimes: String!
 }
 
 # gqlgen supports some custom scalars out of the box

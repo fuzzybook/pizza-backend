@@ -169,8 +169,13 @@ func (r *queryResolver) Promos(ctx context.Context) ([]*models.MenuItem, error) 
 }
 
 // Times is the resolver for the times field.
-func (r *queryResolver) Times(ctx context.Context) (string, error) {
-	return models.Times(ctx)
+func (r *queryResolver) WeekTimes(ctx context.Context) (string, error) {
+	return models.WeekTimes(ctx)
+}
+
+// TodayTimes is the resolver for the todayTimes field.
+func (r *queryResolver) TodayTimes(ctx context.Context) (string, error) {
+	return models.TodayTimes(ctx)
 }
 
 // Query returns QueryResolver implementation.

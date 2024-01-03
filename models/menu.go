@@ -229,7 +229,7 @@ func UpdateMenuIngredient(ctx context.Context, input UpdateIngredient) (*MenuIng
 		menuIngredient.Text = input.Text
 		menuIngredient.Priority = input.Priority
 		menuIngredient.Available = 1
-		menuIngredient.Categories = MenuDataCategoies{}
+		menuIngredient.Categories = input.Categories
 
 		err := context.Database.Save(&menuIngredient).Error
 		if err != nil {
@@ -288,7 +288,7 @@ func UpdateMenuDough(ctx context.Context, input UpdateDough) (*MenuDough, error)
 		menuDough.Text = input.Text
 		menuDough.Priority = input.Priority
 		menuDough.Available = 1
-		menuDough.Categories = MenuDataCategoies{}
+		menuDough.Categories = input.Categories
 		err := context.Database.Save(&menuDough).Error
 		if err != nil {
 			return nil, err
@@ -346,7 +346,7 @@ func UpdateMenuCondiment(ctx context.Context, input UpdateCondiment) (*MenuCondi
 		menuCondiment.Text = input.Text
 		menuCondiment.Priority = input.Priority
 		menuCondiment.Available = 1
-		menuCondiment.Categories = MenuDataCategoies{}
+		menuCondiment.Categories = input.Categories
 		err := context.Database.Save(&menuCondiment).Error
 		if err != nil {
 			return nil, err
@@ -528,6 +528,23 @@ func UpdateMenuItemPromo(ctx context.Context, promo bool, id int) (bool, error) 
 	return true, nil
 }
 
+type __Time struct {
+	Active       bool
+	Start        int
+	End          int
+	AfterTime    int
+	HasAfterTime bool
+}
+
+type TimeZone = struct {
+	Id     int
+	Label  string
+	Height int
+	Start  int
+	End    int
+	Times  map[string]__Time
+}
+
 func SaveTimes(ctx context.Context, times string) (bool, error) {
 	context := common.GetContext(ctx)
 	menuTimes := MenuTimes{}
@@ -546,7 +563,7 @@ func SaveTimes(ctx context.Context, times string) (bool, error) {
 
 }
 
-func Times(ctx context.Context) (string, error) {
+func TodayTimes(ctx context.Context) (string, error) {
 	context := common.GetContext(ctx)
 	menuTimes := MenuTimes{}
 
@@ -557,6 +574,83 @@ func Times(ctx context.Context) (string, error) {
 
 	if menuTimes.ID == 0 {
 		return "", nil
+	}
+
+	x := map[int]TimeZone{}
+	json.Unmarshal([]byte(menuTimes.Times), &x)
+	fmt.Println(x)
+
+	x2 := map[int]TimeZone{}
+
+	for t := 1; t < len(x)+1; t++ {
+		tz := TimeZone{}
+		tz.Id = x[t].Id
+		tz.Start = x[t].Start
+		tz.End = x[t].End
+		tz.Label = x[t].Label
+		tz.Times = make(map[string]__Time)
+		x2[t] = tz
+
+	}
+
+	for i := 0; i < 2; i++ {
+		year, month, day := time.Now().AddDate(0, 0, i).Date()
+		date := fmt.Sprintf("%d-%02d-%02d", year, int(month), day)
+		for t := 1; t < len(x); t++ {
+			val, ok := x[t].Times[date]
+			if ok {
+				x2[t].Times[date] = val
+			}
+		}
+	}
+
+	result, err := json.Marshal(x2)
+	if err != nil {
+		return "", err
+	}
+
+	return string(result), nil
+}
+
+func WeekTimes(ctx context.Context) (string, error) {
+	context := common.GetContext(ctx)
+	menuTimes := MenuTimes{}
+
+	err := context.Database.Where("id = ?", 1).Find(&menuTimes).Error
+	if err != nil {
+		return "", err
+	}
+
+	if menuTimes.ID == 0 {
+		return "", nil
+	}
+
+	x := map[int]TimeZone{}
+	json.Unmarshal([]byte(menuTimes.Times), &x)
+	fmt.Println(x)
+
+	x2 := map[int]TimeZone{}
+
+	for t := 1; t < len(x)+1; t++ {
+		tz := TimeZone{}
+		tz.Id = x[t].Id
+		tz.Start = x[t].Start
+		tz.End = x[t].End
+		tz.Label = x[t].Label
+		tz.Times = make(map[string]__Time)
+		x2[t] = tz
+
+	}
+
+	for i := 0; i < 7; i++ {
+		year, month, day := time.Now().AddDate(0, 0, i).Date()
+		date := fmt.Sprintf("%d-%02d-%02d", year, int(month), day)
+		for t := 1; t < len(x); t++ {
+			val, ok := x[t].Times[date]
+			if ok {
+				x2[t].Times[date] = val
+			}
+		}
 	}
 
 	return menuTimes.Times, nil

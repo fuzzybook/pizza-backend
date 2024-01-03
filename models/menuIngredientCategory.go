@@ -3,7 +3,6 @@ package models
 import (
 	"database/sql/driver"
 	"encoding/json"
-	"fmt"
 )
 
 type MenuDataCategory struct {
@@ -20,9 +19,6 @@ func (e *MenuDataCategoies) Scan(value interface{}) error {
 		return err
 	}
 	*e = v
-	if len([]rune(value.(string))) > 3 {
-		fmt.Println("unmarshal", e)
-	}
 	return nil
 }
 
